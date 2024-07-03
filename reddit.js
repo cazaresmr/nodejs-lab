@@ -1,19 +1,26 @@
 const path = require("path");
 const fs = require("fs");
-const rp = require("request-promise");
+const fetch = require("isomorphic-fetch");
 
 const dataPath = path.join(__dirname, "popular-articles.json");
 
-rp("https://reddit.com/r/popular.json", (err, res, body) => {
-  if (err) console.log(err);
-  let articles = [];
-  JSON.parse(body).data.children.forEach(item => {
-    articles.push({
+fetch("https://reddit.com/r/programmingHumor.json")
+  .then((response) => response.json())
+  .then((data) => {
+    const articles = data.data.children.map((item) => ({
       title: item.data.title,
       url: item.data.url,
-      author: item.data.author
+      author: item.data.author,
+    }));
+
+    console.log(articles);
+
+    fs.writeFileSync(dataPath, JSON.stringify(articles, null, 2), (err) => {
+      if (err) {
+        console.error("Error writing file:", err);
+      } else {
+        console.log("File written successfully");
+      }
     });
-  });
-  console.log(articles);
-  fs.writeFileSync(dataPath, JSON.stringify(articles));
-});
+  })
+  .catch((err) => console.error("Error fetching data:", err));
